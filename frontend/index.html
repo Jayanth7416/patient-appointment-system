@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Appointment System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        header p {
+            opacity: 0.9;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 span {
+            font-size: 1.5rem;
+        }
+        .provider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .provider-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .provider-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.2);
+        }
+        .provider-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+        }
+        .provider-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        .provider-specialty {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        .provider-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .slot {
+            padding: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .slot:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .slot.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .slot.unavailable {
+            background: #f5f5f5;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        .date-selector {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 0;
+            margin-bottom: 16px;
+        }
+        .date-btn {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            min-width: 80px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .date-btn:hover {
+            border-color: #667eea;
+        }
+        .date-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .date-btn .day {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        .date-btn .date {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .appointments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .appointment-item {
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .appointment-item .time {
+            font-weight: 600;
+            color: #667eea;
+        }
+        .appointment-item .details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-scheduled {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-confirmed {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .empty-state span {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 Patient Appointment System</h1>
+            <p>Book your healthcare appointments online</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Providers Section -->
+            <div class="card">
+                <h2><span>👨‍⚕️</span> Select Provider</h2>
+                <div id="providers-list" class="provider-list">
+                    <div class="loading">Loading providers</div>
+                </div>
+            </div>
+
+            <!-- Date & Time Selection -->
+            <div class="card">
+                <h2><span>📅</span> Select Date & Time</h2>
+                <div id="date-selector" class="date-selector"></div>
+                <div id="slots-container">
+                    <div class="empty-state">
+                        <span>👆</span>
+                        <p>Select a provider to see available times</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Form -->
+            <div class="card">
+                <h2><span>📝</span> Book Appointment</h2>
+                <div id="success-message" class="success-message">
+                    ✅ Appointment booked successfully!
+                </div>
+                <form id="booking-form">
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <input type="text" id="patient-name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="patient-email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="patient-phone" placeholder="Enter your phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Appointment Type</label>
+                        <select id="appointment-type">
+                            <option value="new_patient">New Patient Visit</option>
+                            <option value="follow_up">Follow-up Visit</option>
+                            <option value="consultation">Consultation</option>
+                            <option value="annual_checkup">Annual Checkup</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason for Visit</label>
+                        <textarea id="visit-reason" rows="3" placeholder="Brief description of your visit"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="book-btn" disabled>
+                        Book Appointment
+                    </button>
+                </form>
+            </div>
+
+            <!-- My Appointments -->
+            <div class="card">
+                <h2><span>📋</span> Recent Bookings</h2>
+                <div id="appointments-list" class="appointments-list">
+                    <div class="empty-state">
+                        <span>📭</span>
+                        <p>No appointments yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let selectedProvider = null;
+        let selectedDate = null;
+        let selectedSlot = null;
+        let bookedAppointments = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProviders();
+            generateDateSelector();
+        });
+
+        // Load providers
+        async function loadProviders() {
+            try {
+                const response = await fetch(`${API_BASE}/providers`);
+                const providers = await response.json();
+                renderProviders(providers);
+            } catch (error) {
+                document.getElementById('providers-list').innerHTML =
+                    '<div class="empty-state"><span>⚠️</span><p>Could not load providers</p></div>';
+            }
+        }
+
+        // Render providers
+        function renderProviders(providers) {
+            const container = document.getElementById('providers-list');
+            container.innerHTML = providers.map(provider => `
+                <div class="provider-card" data-id="${provider.id}" onclick="selectProvider('${provider.id}', this)">
+                    <div class="provider-name">${provider.title} ${provider.first_name} ${provider.last_name}</div>
+                    <div class="provider-specialty">${formatSpecialty(provider.specialty)}</div>
+                    <div class="provider-meta">
+                        <span>🗣️ ${provider.languages.join(', ')}</span>
+                        <span>⏱️ ${provider.default_appointment_duration} min</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Generate date selector
+        function generateDateSelector() {
+            const container = document.getElementById('date-selector');
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            let html = '';
+
+            for (let i = 0; i < 14; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                const dayName = days[date.getDay()];
+                const dateNum = date.getDate();
+                const dateStr = date.toISOString().split('T')[0];
+
+                html += `
+                    <div class="date-btn" data-date="${dateStr}" onclick="selectDate('${dateStr}', this)">
+                        <div class="day">${dayName}</div>
+                        <div class="date">${dateNum}</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // Select provider
+        function selectProvider(providerId, element) {
+            selectedProvider = providerId;
+            document.querySelectorAll('.provider-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+
+            if (selectedDate) {
+                loadSlots();
+            }
+        }
+
+        // Select date
+        function selectDate(date, element) {
+            selectedDate = date;
+            document.querySelectorAll('.date-btn').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+
+            if (selectedProvider) {
+                loadSlots();
+            }
+        }
+
+        // Load available slots
+        async function loadSlots() {
+            const container = document.getElementById('slots-container');
+            container.innerHTML = '<div class="loading">Loading available times</div>';
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/availability/search?provider_id=${selectedProvider}&start_date=${selectedDate}&end_date=${selectedDate}&limit=50`
+                );
+                const data = await response.json();
+                renderSlots(data.slots);
+            } catch (error) {
+                container.innerHTML = '<div class="empty-state"><span>⚠️</span><p>Could not load slots</p></div>';
+            }
+        }
+
+        // Render slots
+        function renderSlots(slots) {
+            const container = document.getElementById('slots-container');
+
+            if (!slots || slots.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span>😔</span><p>No available slots for this date</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <p style="margin-bottom: 12px; color: #666;">Available times:</p>
+                <div class="slots-grid">
+                    ${slots.map(slot => `
+                        <div class="slot ${slot.available ? '' : 'unavailable'}"
+                             data-slot='${JSON.stringify(slot)}'
+                             onclick="${slot.available ? `selectSlot(this, '${slot.id}', '${slot.start_time}')` : ''}">
+                            ${formatTime(slot.start_time)}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Select slot
+        function selectSlot(element, slotId, time) {
+            selectedSlot = { id: slotId, time: time };
+            document.querySelectorAll('.slot').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('book-btn').disabled = false;
+        }
+
+        // Book appointment
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!selectedProvider || !selectedDate || !selectedSlot) {
+                alert('Please select a provider, date, and time slot');
+                return;
+            }
+
+            const bookBtn = document.getElementById('book-btn');
+            bookBtn.disabled = true;
+            bookBtn.textContent = 'Booking...';
+
+            try {
+                const response = await fetch(`${API_BASE}/appointments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: 'pat-' + Date.now(),
+                        provider_id: selectedProvider,
+                        location_id: 'loc-001',
+                        scheduled_date: selectedDate,
+                        scheduled_time: selectedSlot.time,
+                        appointment_type: document.getElementById('appointment-type').value,
+                        reason: document.getElementById('visit-reason').value
+                    })
+                });
+
+                const appointment = await response.json();
+
+                // Show success
+                document.getElementById('success-message').classList.add('show');
+                setTimeout(() => {
+                    document.getElementById('success-message').classList.remove('show');
+                }, 5000);
+
+                // Add to list
+                bookedAppointments.unshift(appointment);
+                renderAppointments();
+
+                // Reload slots
+                loadSlots();
+
+                // Reset selection
+                selectedSlot = null;
+                document.querySelectorAll('.slot').forEach(el => el.classList.remove('selected'));
+
+            } catch (error) {
+                alert('Failed to book appointment. Please try again.');
+            }
+
+            bookBtn.disabled = false;
+            bookBtn.textContent = 'Book Appointment';
+        });
+
+        // Render appointments
+        function renderAppointments() {
+            const container = document.getElementById('appointments-list');
+
+            if (bookedAppointments.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span>📭</span><p>No appointments yet</p></div>';
+                return;
+            }
+
+            container.innerHTML = bookedAppointments.map(apt => `
+                <div class="appointment-item">
+                    <div>
+                        <div class="time">${formatDateTime(apt.scheduled_time)}</div>
+                        <div class="details">${apt.reason || apt.appointment_type}</div>
+                    </div>
+                    <span class="status-badge status-${apt.status}">${apt.status}</span>
+                </div>
+            `).join('');
+        }
+
+        // Helpers
+        function formatSpecialty(specialty) {
+            return specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            return `${h12}:${minutes} ${ampm}`;
+        }
+
+        function formatDateTime(datetime) {
+            const d = new Date(datetime);
+            return d.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>
